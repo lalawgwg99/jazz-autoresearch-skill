@@ -5,24 +5,20 @@ class EnvSentinel:
         self.results = {}
 
     def scan(self):
-        # 1. 檢查 Python 版本
         self.results['python_version'] = sys.version.split()[0]
-        
-        # 2. 檢查 Torch 與 GPU 支援 (MPS for Mac, CUDA for Linux/PC)
         try:
             import torch
             self.results['torch_installed'] = True
             if torch.backends.mps.is_available():
                 self.results['gpu_type'] = 'MPS (Apple Silicon)'
             elif torch.cuda.is_available():
-                self.results['gpu_type'] = f'CUDA ({torch.cuda.get_device_name(0)})'
+                self.results['gpu_type'] = 'CUDA'
             else:
-                self.results['gpu_type'] = 'None (CPU Only)'
+                self.results['gpu_type'] = 'None'
         except ImportError:
             self.results['torch_installed'] = False
             self.results['gpu_type'] = 'None'
 
-        # 3. 檢查關鍵依賴
         deps = ['pandas', 'matplotlib', 'uv']
         self.results['dependencies'] = {}
         for dep in deps:
@@ -36,15 +32,8 @@ class EnvSentinel:
 
     def get_report(self):
         r = self.scan()
-        report = f'🔍 [EnvSentinel] 環境掃描報告:
-'
-        report += f'- Python: {r[python_version]}
-'
-        report += f'- GPU: {r[gpu_type]}
-'
-        report += f'- Torch: {✅ if r[torch_installed] else ❌}
-'
-        for dep, ok in r[dependencies].items():
-            report += f'- {dep}: {✅ if ok else ❌}
-'
+        report = "🔍 [EnvSentinel] Environment Scan:" + chr(10)
+        report += "- Python: " + str(r["python_version"]) + chr(10)
+        report += "- GPU: " + str(r["gpu_type"]) + chr(10)
+        report += "- Torch: " + ("✅" if r["torch_installed"] else "❌") + chr(10)
         return report
