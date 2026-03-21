@@ -5,7 +5,6 @@ import json
 
 class ResultTracker:
     def __init__(self, filepath=None):
-        # 使用絕對路徑確保在任何目錄執行都能讀到同一個資料庫
         if filepath is None:
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             self.filepath = os.path.join(base_dir, "results.tsv")
@@ -20,7 +19,6 @@ class ResultTracker:
                 writer.writerow(["timestamp", "hypothesis", "val_bpb", "improved", "config"])
 
     def log_result(self, hypothesis, bpb, improved, config_dict):
-        # 確保即使失敗也會記錄，以便 LLM 學習
         try:
             with open(self.filepath, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f, delimiter="	")
@@ -44,9 +42,8 @@ class ResultTracker:
                 reader = csv.DictReader(f, delimiter="	")
                 for row in reader:
                     try:
-                        # 修正：跳過 FAILED 或 N/A 紀錄
                         val = row.get("val_bpb", "1.5")
-                        if val in ["FAILED", "N/A", "None"]:
+                        if val in ["FAILED", "N/A", "None", ""]:
                             continue
                         score = float(val)
                         if score < best:
@@ -65,7 +62,9 @@ class ResultTracker:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f, delimiter="	")
                 for row in reader:
-                    history.append(f"- {row['timestamp']} | Hypo: {row['hypothesis']} | BPB: {row['val_bpb']} | Improved: {row['improved']}")
+                    # 避免換行符號損壞字串
+                    summary = f"- {row['timestamp']} | Hypo: {row['hypothesis']} | BPB: {row['val_bpb']} | Improved: {row['improved']}"
+                    history.append(summary)
         except Exception as e:
             return f"Error reading history: {e}"
         return "
