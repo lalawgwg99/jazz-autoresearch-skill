@@ -1,66 +1,72 @@
 import os
 import csv
 import time
+import json
 
 class ResultTracker:
-    def __init__(self, filepath="results.tsv"):
-        self.filepath = filepath
+    def __init__(self, filepath=None):
+        # 使用絕對路徑確保在任何目錄執行都能讀到同一個資料庫
+        if filepath is None:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.filepath = os.path.join(base_dir, "results.tsv")
+        else:
+            self.filepath = filepath
         self._init_file()
 
     def _init_file(self):
         if not os.path.exists(self.filepath):
-            with open(self.filepath, "w", newline="") as f:
-                writer = csv.writer(f, delimiter="\t")
+            with open(self.filepath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f, delimiter="	")
                 writer.writerow(["timestamp", "hypothesis", "val_bpb", "improved", "config"])
 
     def log_result(self, hypothesis, bpb, improved, config_dict):
-        with open(self.filepath, "a", newline="") as f:
-            writer = csv.writer(f, delimiter="\t")
-            writer.writerow([
-                time.strftime("%Y-%m-%d %H:%M:%S"),
-                hypothesis,
-                f"{bpb:.6f}" if bpb is not None else "N/A",
-                "YES" if improved else "NO",
-                str(config_dict)
-            ])
-
-    def log_failed(self, hypothesis, error_msg=""):
-        """記錄執行失敗（例外錯誤）的實驗，確保失敗歷史不遺失"""
-        with open(self.filepath, "a", newline="") as f:
-            writer = csv.writer(f, delimiter="\t")
-            writer.writerow([
-                time.strftime("%Y-%m-%d %H:%M:%S"),
-                hypothesis,
-                "N/A",
-                "FAILED",
-                error_msg[:200] if error_msg else "experiment error"
-            ])
+        # 確保即使失敗也會記錄，以便 LLM 學習
+        try:
+            with open(self.filepath, "a", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f, delimiter="	")
+                writer.writerow([
+                    time.strftime("%Y-%m-%d %H:%M:%S"),
+                    hypothesis,
+                    f"{bpb:.6f}" if bpb is not None else "FAILED",
+                    "YES" if improved else "NO",
+                    json.dumps(config_dict)
+                ])
+        except Exception as e:
+            print(f"Error logging result: {e}")
 
     def get_best_score(self):
         if not os.path.exists(self.filepath):
-            return 1.5  # 預設初始分數
-
+            return 1.5
+        
         best = 1.5
-        with open(self.filepath, "r") as f:
-            reader = csv.DictReader(f, delimiter="\t")
-            for row in reader:
-                if row["val_bpb"] == "N/A":
-                    continue
-                try:
-                    score = float(row["val_bpb"])
-                    if score < best:
-                        best = score
-                except (ValueError, KeyError):
-                    continue
+        try:
+            with open(self.filepath, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f, delimiter="	")
+                for row in reader:
+                    try:
+                        # 修正：跳過 FAILED 或 N/A 紀錄
+                        val = row.get("val_bpb", "1.5")
+                        if val in ["FAILED", "N/A", "None"]:
+                            continue
+                        score = float(val)
+                        if score < best:
+                            best = score
+                    except (ValueError, TypeError):
+                        continue
+        except Exception as e:
+            print(f"Error reading best score: {e}")
         return best
 
     def get_history_summary(self, limit=10):
-        """回傳最近 N 筆實驗的摘要，包含成功與失敗紀錄，供 LLM 分析"""
         if not os.path.exists(self.filepath):
-            return []
-        rows = []
-        with open(self.filepath, "r") as f:
-            reader = csv.DictReader(f, delimiter="\t")
-            for row in reader:
-                rows.append(row)
-        return rows[-limit:]
+            return "No history yet."
+        history = []
+        try:
+            with open(self.filepath, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f, delimiter="	")
+                for row in reader:
+                    history.append(f"- {row['timestamp']} | Hypo: {row['hypothesis']} | BPB: {row['val_bpb']} | Improved: {row['improved']}")
+        except Exception as e:
+            return f"Error reading history: {e}"
+        return "
+".join(history[-limit:])
