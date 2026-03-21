@@ -10,13 +10,22 @@ class ResultTracker:
         if not os.path.exists(self.filepath):
             with open(self.filepath, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f, delimiter="	")
-                writer.writerow(["timestamp", "hypothesis", "val_bpb", "improved", "config"])
+                writer.writerow(["timestamp", "hypothesis", "val_bpb", "improved", "failure_category", "exit_code", "rca", "config"])
 
-    def log_result(self, hypothesis, bpb, improved, config_dict):
+    def log_result(self, hypothesis, bpb, improved, config_dict, failure_category="none", exit_code=0, rca="none"):
         try:
             with open(self.filepath, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f, delimiter="	")
-                writer.writerow([time.strftime("%Y-%m-%d %H:%M:%S"), hypothesis, "{:.6f}".format(bpb) if bpb is not None else "FAILED", "YES" if improved else "NO", json.dumps(config_dict)])
+                writer.writerow([
+                    time.strftime("%Y-%m-%d %H:%M:%S"), 
+                    hypothesis, 
+                    "{:.6f}".format(bpb) if (bpb is not None and bpb != float("inf")) else "FAILED", 
+                    "YES" if improved else "NO",
+                    failure_category,
+                    str(exit_code),
+                    rca,
+                    json.dumps(config_dict)
+                ])
         except Exception as e:
             print("Error: " + str(e))
 
@@ -27,10 +36,9 @@ class ResultTracker:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f, delimiter="	")
                 for row in reader:
-                    try:
-                        v = row.get("val_bpb", "1.5")
-                        if v not in ["FAILED", "N/A", ""]: best = min(best, float(v))
-                    except: continue
+                    v = row.get("val_bpb", "1.5")
+                    if v not in ["FAILED", "N/A", "", "inf"]:
+                        best = min(best, float(v))
         except: pass
         return best
 
@@ -41,6 +49,8 @@ class ResultTracker:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f, delimiter="	")
                 for row in reader:
-                    history.append("- " + str(row.get("timestamp")) + " | Hypo: " + str(row.get("hypothesis")))
+                    res = row.get("val_bpb", "FAILED")
+                    history.append(f"- {row.get('timestamp')} | Hypo: {row.get('hypothesis')} | Res: {res}")
         except: return "Error."
-        return chr(10).join(history[-limit:])
+        return "
+".join(history[-limit:])
