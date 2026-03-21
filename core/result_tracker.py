@@ -6,19 +6,43 @@ class ResultTracker:
         self.filepath = filepath or os.path.join(base_dir, 'results.tsv')
         self._init_file()
 
-    def __init_file(self):
+    def _init_file(self):
         if not os.path.exists(self.filepath):
             with open(self.filepath, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f, delimiter='\t')
+                writer = csv.writer(f, delimiter='	')
                 writer.writerow(['timestamp', 'hypothesis', 'val_bpb', 'improved', 'config'])
 
     def log_result(self, hypothesis, bpb, improved, config_dict):
         try:
-            ��]�[��[���[\]	�I��]�[�OI��[���[��I�]�N	�H\����ܚ]\�H�݋�ܚ]\��[[Z]\�I�	�B�ܚ]\��ܚ]\����[YK����[YJ	�VKI[KIY	R�SN�T��K\�\�\���؜�����I�Y���\����ۙH[�H	ѐRSQ	�	�QT��Y�[\�ݙY[�H	ӓ����ۋ�[\��ۙ�Y��X�
-WJB�^�\^�\[ۈ\�N��[�
-��\��܈���[�Έ�_I�B��Y��]ؙ\����ܙJ�[�N��Y����˜]�^\���[���[\]
-N��]\��K�B��\�HK�B��N���]�[��[���[\]	܉�[���[��I�]�N	�H\�����XY\�H�݋�X��XY\��[[Z]\�I�	�B��܈���[��XY\����N���H��˙�]
-	ݘ[؜��	�K�I�B�Y����[��ѐRSQ	�	Ӌ�I�	��N��\�HZ[��\���]
-�JB�^�\��۝[�YB�^�\�\��]\���\���Y��]�\�ܞW��[[X\�J�[�[Z]LL
-N��Y����˜]�^\���[���[\]
-N��]\��	ӛ�\�ܞK�\�ܞHH�B��N��7v�F��V�6V�b�f��WF��w"r�V�6�F��s�wWFbӂr�2c��&VFW"�77b�F�7E&VFW"�b�FVƖ֗FW#�u�Br��f�"&�r��&VFW#����7F�'��V�B�b"��&�r�vWB�wF��W7F�r�������&�r�vWB�v���F�W6�2r��"��W�6WC�&WGW&�tW'&�"&VF��r��7F�'��p�&WGW&�u��r���ↆ�7F�'���Ɩ֗C��
+            with open(self.filepath, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f, delimiter='	')
+                writer.writerow([time.strftime('%Y-%m-%d %H:%M:%S'), hypothesis, '{:.6f}'.format(bpb) if bpb is not None else 'FAILED', 'YES' if improved else 'NO', json.dumps(config_dict)])
+        except Exception as e:
+            print('Error: ' + str(e))
+
+    def get_best_score(self):
+        if not os.path.exists(self.filepath): return 1.5
+        best = 1.5
+        try:
+            with open(self.filepath, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f, delimiter='	')
+                for row in reader:
+                    try:
+                        v = row.get('val_bpb', '1.5')
+                        if v not in ['FAILED', 'N/A', '']:
+                            best = min(best, float(v))
+                    except: continue
+        except: pass
+        return best
+
+    def get_history_summary(self, limit=10):
+        if not os.path.exists(self.filepath): return 'No history.'
+        history = []
+        try:
+            with open(self.filepath, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f, delimiter='	')
+                for row in reader:
+                    history.append('- ' + str(row.get('timestamp')) + ' | Hypo: ' + str(row.get('hypothesis')))
+        except: return 'Error.'
+        return '
+'.join(history[-limit:])
