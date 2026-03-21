@@ -43,6 +43,3 @@ class ResultTracker:
                 reader = csv.DictReader(f, delimiter='	')
                 for row in reader:
                     history.append('- ' + str(row.get('timestamp')) + ' | Hypo: ' + str(row.get('hypothesis')))
-        except: return 'Error.'
-        return '
-'.join(history[-limit:])
