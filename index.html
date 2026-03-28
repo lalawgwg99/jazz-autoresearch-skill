@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Health — 月經週期</title>
+  <style>
+    :root {
+      --primary: #FF2D55;
+      --primary-opacity: rgba(255, 45, 85, 0.1);
+      --secondary: #5856D6;
+      --bg: #F2F2F7;
+      --card-bg: #FFFFFF;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px 0;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 16px;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: inherit;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="date"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-opacity);
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+
+    button:active {
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--primary-opacity);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-date {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .item-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .delete-btn {
+      background: transparent;
+      color: #FF3B30;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      width: auto;
+      margin-top: 0;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .export-import {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .export-import button {
+      font-size: 14px;
+      padding: 12px;
+      background: var(--secondary);
+    }
+
+    .predict-box {
+      background: var(--primary);
+      color: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .predict-label {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+
+    .predict-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .predict-sub {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    #error {
+      background: #FF3B30;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-top: 12px;
+      font-size: 14px;
+      display: none;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
+
+    .tip-box {
+      background: rgba(88, 86, 214, 0.05);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .tip-box h4 {
+      font-size: 15px;
+      color: var(--secondary);
+      margin: 0 0 8px 0;
+    }
+
+    .tip-box ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🌸 月經週期</h1>
+      <p>Apple Health 風格追蹤器</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 新增記錄</div>
+      <div class="input-group">
+        <label>月經開始日期</label>
+        <input type="date" id="dateInput">
+      </div>
+      <button onclick="addDate()">新增日期</button>
+      <div id="error"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 統計資料</div>
+      <div class="stats-grid" id="statsBox" style="display:none;">
+        <div class="stat-card">
+          <div class="stat-value" id="avgDays">-</div>
+          <div class="stat-label">平均週期</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="lastCycle">-</div>
+          <div class="stat-label">距上次</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="cycleCount">-</div>
+          <div class="stat-label">週期數</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stability">-</div>
+          <div class="stat-label">穩定度</div>
+        </div>
+      </div>
+      <div id="predictBox" class="predict-box" style="display:none;">
+        <div class="predict-label">🔮 預計下次月經</div>
+        <div class="predict-value" id="nextPeriod">-</div>
+        <div class="predict-sub" id="daysUntilNext"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 所有記錄</div>
+      <ul class="list" id="dateList"></ul>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="icon">📭</div>
+        <p>暫時沒有記錄</p>
+        <p style="font-size:13px;margin-top:8px;">加入第一個日期開始追蹤</p>
+      </div>
+
+      <div class="export-import">
+        <button onclick="exportData()">💾 匯出</button>
+        <button onclick="importData()">📥 匯入</button>
+        <button onclick="clearAll()" style="background:#FF3B30;">🗑️ 清除</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none;" onchange="handleImport(event)">
+    </div>
+
+    <div class="card">
+      <div class="tip-box">
+        <h4>💡 使用說明</h4>
+        <ul>
+          <li>📌 記錄每次月經「開始日期」</li>
+          <li>📊 至少 2 筆數據才會顯示統計</li>
+          <li>🔮 預測根據平均週期計算</li>
+          <li>💾 資料存在手機，不會上傳</li>
+          <li>📱 最佳化設計，像 Apple App</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    let dates = JSON.parse(localStorage.getItem('menstruationDates') || '[]');
+
+    function parseLocalDate(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function save() {
+      dates.sort((a, b) => parseLocalDate(a) - parseLocalDate(b));
+      localStorage.setItem('menstruationDates', JSON.stringify(dates));
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function formatDate(dateStr) {
+      const d = parseLocalDate(dateStr);
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    function addDate() {
+      const input = document.getElementById('dateInput');
+      const error = document.getElementById('error');
+      const date = input.value;
+
+      if (!date) {
+        error.textContent = '請選擇日期';
+        error.style.display = 'block';
+        return;
+      }
+
+      if (dates.includes(date)) {
+        error.textContent = '這個日期已經記錄過了';
+        error.style.display = 'block';
+        return;
+      }
+
+      dates.push(date);
+      save();
+      input.value = '';
+      error.style.display = 'none';
+      showToast('✅ 已新增！');
+      render();
+    }
+
+    function deleteDate(dateStr) {
+      if (!confirm('確定要刪除這條記錄嗎？')) return;
+      dates = dates.filter(d => d !== dateStr);
+      save();
+      showToast('🗑️ 已刪除');
+      render();
+    }
+
+    function calculateStats() {
+      if (dates.length < 2) return null;
+
+      const sorted = [...dates].sort((a, b) => parseLocalDate(a) - parseLocalDate(b));
+      const cycles = [];
+
+      for (let i = 1; i < sorted.length; i++) {
+        const diff = (parseLocalDate(sorted[i]) - parseLocalDate(sorted[i - 1])) / (1000 * 60 * 60 * 24);
+        cycles.push(diff);
+      }
+
+      const avg = cycles.reduce((a, b) => a + b, 0) / cycles.length;
+      const avgRounded = Math.round(avg);
+
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const lastDate = sorted[sorted.length - 1];
+      const lastDaysAgo = Math.max(0, Math.round(
+        (todayMidnight - parseLocalDate(lastDate)) / (1000 * 60 * 60 * 24)
+      ));
+
+      const nextPeriodDate = parseLocalDate(lastDate);
+      nextPeriodDate.setDate(nextPeriodDate.getDate() + avgRounded);
+
+      const daysUntilNext = Math.round(
+        (nextPeriodDate - todayMidnight) / (1000 * 60 * 60 * 24)
+      );
+
+      const variance = cycles.reduce((sum, c) => sum + Math.pow(c - avg, 2), 0) / cycles.length;
+      const stdDev = Math.sqrt(variance);
+      const stability = stdDev < 3 ? '穩定' : stdDev < 7 ? '普通' : '不穩定';
+
+      return { avgRounded, lastDaysAgo, nextPeriodDate, daysUntilNext, cycleCount: cycles.length, stability };
+    }
+
+    function exportData() {
+      if (dates.length === 0) {
+        showToast('⚠️ 沒有資料可以匯出');
+        return;
+      }
+      const data = { dates, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `period-tracker-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('💾 匯出成功！');
+    }
+
+    function importData() {
+      document.getElementById('importFile').click();
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data || !Array.isArray(data.dates)) {
+            throw new Error('檔案格式不正確');
+          }
+
+          const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+          const valid = data.dates.filter(entry => {
+            if (typeof entry !== 'string' || !ISO_DATE_RE.test(entry)) return false;
+            const d = parseLocalDate(entry);
+            return !isNaN(d.getTime()) && formatDate(entry) === entry;
+          });
+
+          if (valid.length === 0) {
+            showToast('⚠️ 沒有可匯入的有效資料');
+            return;
+          }
+
+          const skipped = data.dates.length - valid.length;
+          const confirmMsg = skipped > 0
+            ? `要匯入 ${valid.length} 筆記錄嗎？（已略過 ${skipped} 筆無效資料）這會覆蓋現有資料。`
+            : `要匯入 ${valid.length} 筆記錄嗎？這會覆蓋現有資料。`;
+
+          if (confirm(confirmMsg)) {
+            dates = valid;
+            save();
+            showToast('📥 匯入成功！');
+            render();
+          }
+        } catch (err) {
+          showToast('⚠️ 匯入失敗：' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function clearAll() {
+      if (!confirm('⚠️ 確定要清除所有資料嗎？此動作無法復原！')) return;
+      dates = [];
+      save();
+      showToast('🗑️ 已全部清除');
+      render();
+    }
+
+    function render() {
+      const list = document.getElementById('dateList');
+      const emptyState = document.getElementById('emptyState');
+      const statsBox = document.getElementById('statsBox');
+      const predictBox = document.getElementById('predictBox');
+
+      if (dates.length === 0) {
+        list.innerHTML = '';
+      } else {
+        const sorted = [...dates].sort((a, b) => parseLocalDate(a) - parseLocalDate(b));
+        list.innerHTML = sorted.slice().reverse().map(d => {
+          const sortedIndex = sorted.indexOf(d);
+          let metaHtml;
+          if (sortedIndex > 0) {
+            const prevDate = sorted[sortedIndex - 1];
+            const diff = Math.round(
+              (parseLocalDate(d) - parseLocalDate(prevDate)) / (1000 * 60 * 60 * 24)
+            );
+            metaHtml = `<div class="item-meta">距上次 ${diff} 天</div>`;
+          } else {
+            metaHtml = `<div class="item-meta">首筆記錄</div>`;
+          }
+          return `<li class="list-item">
+            <span>
+              <div class="item-date">${d}</div>
+              ${metaHtml}
+            </span>
+            <button class="delete-btn" onclick="deleteDate('${d}')" aria-label="刪除 ${d}">刪除</button>
+          </li>`;
+        }).join('');
+      }
+
+      emptyState.style.display = dates.length === 0 ? 'block' : 'none';
+      list.style.display = dates.length > 0 ? 'block' : 'none';
+
+      const stats = calculateStats();
+      statsBox.style.display = stats ? 'grid' : 'none';
+      predictBox.style.display = stats ? 'block' : 'none';
+
+      if (stats) {
+        document.getElementById('avgDays').textContent = stats.avgRounded + '天';
+        document.getElementById('lastCycle').textContent = stats.lastDaysAgo + '天';
+        document.getElementById('cycleCount').textContent = stats.cycleCount;
+        document.getElementById('stability').textContent = stats.stability;
+
+        const currentYear = new Date().getFullYear();
+        const dateOpts = stats.nextPeriodDate.getFullYear() !== currentYear
+          ? { year: 'numeric', month: 'short', day: 'numeric' }
+          : { month: 'short', day: 'numeric' };
+        document.getElementById('nextPeriod').textContent =
+          stats.nextPeriodDate.toLocaleDateString('zh-TW', dateOpts);
+
+        const sub = document.getElementById('daysUntilNext');
+        if (stats.daysUntilNext > 0) {
+          sub.textContent = '還有 ' + stats.daysUntilNext + ' 天';
+        } else if (stats.daysUntilNext === 0) {
+          sub.textContent = '預計今天';
+        } else {
+          sub.textContent = '已超過 ' + Math.abs(stats.daysUntilNext) + ' 天';
+        }
+      } else {
+        document.getElementById('avgDays').textContent = '-';
+        document.getElementById('lastCycle').textContent = '-';
+        document.getElementById('cycleCount').textContent = '-';
+        document.getElementById('stability').textContent = '-';
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dateInput').max = today;
+    }
+
+    render();
+  </script>
+</body>
+</html>
